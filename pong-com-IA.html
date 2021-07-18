@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong 1.0</title>
+    <style>
+        body{
+            background-color: black;
+        }
+        #campo{
+            display: flex;
+            justify-content: space-between;
+        }
+        #dvcampoesquerdo{
+            background-color: black;
+            margin-top: 0px;
+            height: 640px;
+            width: 675px;
+            border-right: dotted 2px white;
+        }
+        #dvcampodireito{
+            border-left: dotted 2px white;
+            background-color: black;
+            margin-top: 0px;
+            height: 640px;
+            width: 675px;
+        }
+        .raket{
+            width: 18px;
+            height: 140px;
+            background-color: white;
+            position: absolute;
+            top: 240px;
+        }
+        #dvjogador{
+            left: 80px;
+        }
+        #dvcpu{
+            left: 1264px;
+        }
+        #dvbola{
+            background-color: white;
+            position: absolute;
+            left: 666px;
+            top: 312px;
+            width: 25px;
+            height: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div id="campo">
+        <div id="dvcampoesquerdo">
+            <div id="dvjogador" class="raket"></div>
+        </div>
+        <div id="dvbola"></div>
+        <div id="dvcampodireito">
+            <div id="dvcpu" class="raket"></div>
+        </div>
+    </div>
+</body>
+<script>
+    var jogPosX, jogPosY, cpuPosX, cpuPosY, bolaPosX, bolaPosY; // posiçoes dos elementos
+    var campoheight = 645, campowidth = 1332, raketheight = 140, raketwidth = 18, bolaheight = 25;
+    var jogPosXini = 80, jogPosYini = 240, cpuPosXini = 1264, cpuPosYini = 240, bolaPosXini = 666, bolaPosYini = 312; // posiçoes inicias dos elementoss
+    var dirJogY, dircpuY, dirBolaX, dirBolaY;
+    var jog, cpu, bola;
+    var rodando; // verifica se o jogo esta rodando
+    var tecla, velBola, velJog, velCpu;
+    var frames;
+    window.addEventListener("load", iniciajogo)
+    function iniciajogo(){
+        if(!rodando){
+            cancelAnimationFrame(frames)
+            if (Math.random()*6 >= 3){
+                dirBolaX = -1
+            }else{
+                dirBolaX = 1
+            }
+            if (Math.random()*6 >= 3){
+                dirBolaY = -1
+            }else{
+                dirBolaY = 1
+            }
+            rodando = true
+            dirJogY = 0
+            dircpuY = 0
+            jogPosY= jogPosYini
+            cpuPosY = cpuPosYini
+            velJog = velCpu = 10
+            velBola = 5
+            bolaPosX = bolaPosXini
+            bolaPosY = bolaPosYini
+            jog = document.querySelector("div#dvjogador")
+            cpu = document.querySelector("div#dvcpu")
+            bola = document.querySelector("div#dvbola")
+            document.addEventListener("keydown", teclaDown)
+            document.addEventListener("keyup", teclaUp)
+            console.log(jogPosY + "dentro de iniciajogo")
+            game()
+        }
+    }
+    function movebolinha(){
+        bolaPosX += dirBolaX*velBola
+        bolaPosY += dirBolaY*velBola
+        if (bolaPosY <= 4 || bolaPosY + bolaheight >= campoheight){ // Rebater na parte inferior e superior
+            dirBolaY *= -1
+        }
+        if (bolaPosX <= 0 || bolaPosX >= campowidth){ // Passar a linha do gol
+            if (Math.random()*6 >= 3){
+                dirBolaY = -1
+            }else{
+                dirBolaY = 1
+            }
+            bolaPosX = bolaPosXini
+            bolaPosY = bolaPosYini
+        }
+        // Rebater no jogador
+        if ((bolaPosX) < (jogPosXini + raketwidth) && (bolaPosX > jogPosXini + raketwidth - 5) && (bolaPosY + bolaheight) >= (jogPosY) && (bolaPosY) <= (jogPosY + raketheight)){
+            dirBolaY = (((bolaPosY + (bolaheight / 2)) - (jogPosY + (raketheight / 2))) / 20)
+            dirBolaX *= -1 
+        }
+        // Rebater na cpu
+        if ((bolaPosX) >= (cpuPosXini - raketwidth) && (bolaPosX < cpuPosXini - raketwidth + 5) && (bolaPosY + bolaheight) >= (cpuPosY) && (bolaPosY) <= (cpuPosY + raketheight)){
+            dirBolaY = (((bolaPosY + (bolaheight / 2)) - (cpuPosY + (raketheight / 2))) / 20)
+            dirBolaX *= -1
+        }
+        bola.style.top = bolaPosY + "px"
+        bola.style.left = bolaPosX + "px"
+
+    }
+    function moverJog(){
+        jogPosY += dirJogY*velJog
+            if (jogPosY <= 4 || jogPosY + raketheight >= campoheight){
+                jogPosY += (dirJogY *-1) * velJog
+            }
+        jog.style.top = jogPosY + "px"
+    }
+    function moverCpu(){
+        if(bolaPosX > bolaPosXini && dirBolaX > 0){// quando pode mover para pegar a bola
+            velCpu = 10
+            if(bolaPosY + (bolaheight/2) > ((cpuPosY + (raketheight/2)))+ velCpu){
+                // mover para baixo
+                if ((cpuPosY + raketheight) <= campoheight){
+                    cpuPosY += velCpu
+                }
+            }else if(bolaPosY + (bolaheight/2)< ((cpuPosY + (raketheight/2))) -  velCpu){
+                // mover para cima
+                if (cpuPosY >= 0){
+                    cpuPosY -= velCpu
+                }
+            }    
+        }else{
+            if (cpuPosY > cpuPosYini){
+                cpuPosY -= velCpu
+            }else if (cpuPosY < cpuPosXini){
+                cpuPosY += velCpu
+            }
+            if (cpuPosY == cpuPosYini){
+                velCpu = 0
+            }
+        }  
+        cpu.style.top = cpuPosY + "px"  
+    }
+    function game(){
+        if(rodando){
+            moverJog()
+            movebolinha()
+            moverCpu()
+        }
+        frames = requestAnimationFrame(game)    
+    }
+
+    function teclaDown(){
+        console.log(jogPosY + "dentro de teclaDown")
+        if(rodando){
+            tecla = event.keyCode
+            if(tecla == 87){// tecla w
+                dirJogY = -1
+            }
+            if (tecla == 83){// tecla s
+                dirJogY = 1
+            }
+        }
+    }
+    function teclaUp(){
+        if(rodando){
+            tecla = event.keyCode
+            if(tecla == 87){// tecla w
+                dirJogY = 0
+            }
+            if (tecla == 83){// tecla s
+                dirJogY = 0
+            }
+        }
+    }
+</script>
+</html>
